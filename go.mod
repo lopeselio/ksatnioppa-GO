@@ -1,3 +1,3 @@
-module github.com/kubucation/go-rollercoaster-api
+module github.com/lopeselio/ksatnioppa-GO
 
 go 1.15

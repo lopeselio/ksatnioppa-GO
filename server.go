@@ -10,13 +10,18 @@ import(
 	"strings"
 	"math/rand"
 	"os"
+	// "go.mongodb.org/mongo-driver/bson"
+	// "go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 
 ) 
 
+var client *mongo.Client
+
 type Meeting struct {
-	Name         string `json:"name"`
-	Email        string `json:"email"`
-	ID           string `json:"id"`
+	Name         string 						`json:"name"`
+	Email        string 						`json:"email"`
+	ID           string 						`json:"id"`
 }
 
 type meetingHandlers struct {
@@ -40,6 +45,7 @@ func (h *meetingHandlers) meetings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *meetingHandlers) get(w http.ResponseWriter, r *http.Request) {
+	collection := client.Database("develioper").Collection("meetings")
 	meetings := make([]Meeting, len(h.store))
 	h.Lock()
 	i := 0
@@ -60,6 +66,7 @@ func (h *meetingHandlers) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *meetingHandlers) getMeeting(w http.ResponseWriter, r *http.Request) {
+	collection := client.Database("develioper").Collection("meetings")
 	parts := strings.Split(r.URL.String(), "/")
 	if len(parts) != 3 {
 		w.WriteHeader(http.StatusNotFound)
@@ -91,6 +98,7 @@ func (h *meetingHandlers) getMeeting(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *meetingHandlers) getRandomMeeting(w http.ResponseWriter, r *http.Request) {
+	collection := client.Database("develioper").Collection("meetings")
 	ids := make([]string, len(h.store))
 	h.Lock()
 	i := 0
@@ -116,6 +124,7 @@ func (h *meetingHandlers) getRandomMeeting(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *meetingHandlers) post(w http.ResponseWriter, r *http.Request) {
+	collection := client.Database("develioper").Collection("meetings")
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -166,6 +175,7 @@ func newAdminPortal() *adminPortal {
 }
 
 func (a adminPortal) handler(w http.ResponseWriter, r *http.Request) {
+	collection := client.Database("develioper").Collection("meetings")
 	user, pass, ok := r.BasicAuth()
 	if !ok || user != "admin" || pass != a.password {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -177,6 +187,8 @@ func (a adminPortal) handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	client, _ = mongo.Connect(ctx, clientOptions)
 	meetingHandlers := newMeetingHandlers()
 	http.HandleFunc("/meetings", meetingHandlers.meetings)
 	err := http.ListenAndServe(":8080", nil)
@@ -184,4 +196,7 @@ func main() {
 		panic(err)
 	}
 }
+
+
+// Remaining: mongo
 
